@@ -1,3 +1,4 @@
+/ https://creatorsgarten.org 301!
 /discord https://discord.gg/fsZq57cmRk 301!
 /bkk/discord https://discord.gg/RHRmCrnhqF 301!
 
@@ -14,6 +15,10 @@
 /press https://www.notion.so/creatorsgarten/Press-68ac77c48d5849a29f32fae307fad0f1 301!
 
 /staff/notion https://creatorsgarten.notion.site/Planner-fe442faccfa8414389c67872819ada77 301!
+
+/e https://creatorsgarten.org/events/ 301!
+/e/:event https://creatorsgarten.org/events/:event 301!
+/e/:event/v/:slug/edit https://github.com/creatorsgarten/videos/blob/main/data/videos/:event/:slug.md?plain=1 301!
 
 /* https://garten.page.link/:splat 200!
 
