@@ -3,6 +3,8 @@
 /edit https://github.com/creatorsgarten/grtn.org/edit/main/_redirects
 /links https://github.com/creatorsgarten/grtn.org/blob/main/_redirects
 
+/gh https://github.com/creatorsgarten
+
 /dc      https://discord.gg/fsZq57cmRk 301!
 /discord https://discord.gg/fsZq57cmRk 301!
 
