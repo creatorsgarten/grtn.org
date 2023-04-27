@@ -1,10 +1,18 @@
 / https://creatorsgarten.org 301!
 
+/edit https://github.com/creatorsgarten/grtn.org/edit/main/_redirects
 /links https://github.com/creatorsgarten/grtn.org/blob/main/_redirects
 
+/dc      https://discord.gg/fsZq57cmRk 301!
 /discord https://discord.gg/fsZq57cmRk 301!
+
+/yt      https://www.youtube.com/@creatorsgarten 301!
 /youtube https://www.youtube.com/@creatorsgarten 301!
+
+/fb       https://www.facebook.com/creatorsgarten 301!
 /facebook https://www.facebook.com/creatorsgarten 301!
+
+/ig        https://www.instagram.com/creatorsgarten/ 301!
 /instagram https://www.instagram.com/creatorsgarten/ 301!
 
 /bkk/discord https://discord.gg/RHRmCrnhqF 301!
