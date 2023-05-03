@@ -5,6 +5,8 @@
 /ls https://github.com/creatorsgarten/grtn.org/blob/main/_redirects
 /links https://github.com/creatorsgarten/grtn.org/blob/main/_redirects
 
+/c https://creatorsgarten.org/wiki/CurrentEvent
+
 /gh https://github.com/creatorsgarten
 
 /dc      https://discord.gg/fsZq57cmRk 301!
