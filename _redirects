@@ -1,4 +1,4 @@
-/ https://wiki.creatorsgarten.org/wiki/GRTN 301!
+/ https://creatorsgarten.org/wiki/GRTN 301!
 
 /edit https://github.com/creatorsgarten/grtn.org/edit/main/_redirects
 
@@ -43,6 +43,8 @@
 /e https://creatorsgarten.org/events 301!
 /e/:event https://creatorsgarten.org/event/:event 301!
 /e/:event/v/:slug/edit https://github.com/creatorsgarten/videos/blob/main/data/videos/:event/:slug.md?plain=1 301!
+
+/e/creativecodingmeetup/yt https://www.youtube.com/playlist?list=PLTuz2sLvbRpy66hP5Cxm9XxSGQBoTULay 301!
 
 /* https://garten.page.link/:splat 200!
 
