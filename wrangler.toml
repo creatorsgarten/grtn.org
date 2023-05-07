@@ -1,3 +1,4 @@
 name = "grtn"
 main = "src/index.ts"
 compatibility_date = "2023-05-07"
+account_id = "160d4d33acd4258d2d67c59d7123a282"
