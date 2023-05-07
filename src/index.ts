@@ -39,6 +39,10 @@ export default {
     const routes = await getRoutes();
     await amplitudePromise;
 
+    if (pathname === "/") {
+      return redirect("https://creatorsgarten.org/wiki/GRTN");
+    }
+
     if (pathname === "/routes.json") {
       return new Response(JSON.stringify(routes, null, 2), {
         headers: {
