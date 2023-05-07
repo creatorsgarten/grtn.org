@@ -12,5 +12,9 @@
     "start": "wrangler dev",
     "deploy": "wrangler publish",
     "test": "vitest"
+  },
+  "dependencies": {
+    "path-to-regexp": "^6.2.1",
+    "tagged-hypertext": "^1.0.1"
   }
 }

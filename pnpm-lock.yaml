@@ -1,5 +1,13 @@
 lockfileVersion: '6.0'
 
+dependencies:
+  path-to-regexp:
+    specifier: ^6.2.1
+    version: 6.2.1
+  tagged-hypertext:
+    specifier: ^1.0.1
+    version: 1.0.1
+
 devDependencies:
   '@cloudflare/workers-types':
     specifier: ^4.20230419.0
@@ -1041,6 +1049,10 @@ packages:
     engines: {node: '>=14'}
     dev: true
 
+  /lodash.escape@4.0.1:
+    resolution: {integrity: sha512-nXEOnb/jK9g0DYMr1/Xvq6l5xMD7GDG55+GSYIYmS0G4tBk/hURD4JR9WCavs04t33WmJx9kCyp9vJ+mr4BOUw==}
+    dev: false
+
   /lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
     dev: true
@@ -1215,7 +1227,6 @@ packages:
 
   /path-to-regexp@6.2.1:
     resolution: {integrity: sha512-JLyh7xT1kizaEvcaXOQwOc2/Yhw6KZOvPf1S8401UyLk86CU79LN3vl7ztXGm/pZ+YjoyAJ4rxmHwbkBXJX+yw==}
-    dev: true
 
   /pathe@1.1.0:
     resolution: {integrity: sha512-ODbEPR0KKHqECXW1GoxdDb+AZvULmXjVPy4rt+pGo2+TnjJTIPJQSVS6N63n8T2Ip+syHhbn52OewKicV0373w==}
@@ -1398,6 +1409,12 @@ packages:
     dependencies:
       acorn: 8.8.2
     dev: true
+
+  /tagged-hypertext@1.0.1:
+    resolution: {integrity: sha512-0e1T9Tj/KoedGwZbKrxnavKYDGdS3OAInSKdWPJ/VMhNvAK5N7LY9S20pVJE8MhM5XWEWLPkooA21H/U5A4Rpg==}
+    dependencies:
+      lodash.escape: 4.0.1
+    dev: false
 
   /time-zone@1.0.0:
     resolution: {integrity: sha512-TIsDdtKo6+XrPtiTm1ssmMngN1sAhyKnTO2kunQWqNPWIVvCm15Wmw4SWInwTVgJ5u/Tr04+8Ei9TNcw4x4ONA==}

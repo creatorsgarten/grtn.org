@@ -1,3 +1,6 @@
+import { match } from "path-to-regexp";
+import { html, renderHtml } from "tagged-hypertext";
+
 export interface Env {
   // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
   // MY_KV_NAMESPACE: KVNamespace;
@@ -27,14 +30,80 @@ export default {
     ctx: ExecutionContext
   ): Promise<Response> {
     const pathname = new URL(request.url).pathname;
+
+    if (pathname === "/favicon.ico") {
+      return new Response(null, { status: 404 });
+    }
+
     const amplitudePromise = trackVisit(request, env, pathname);
     const routes = await getRoutes();
     await amplitudePromise;
-    return new Response(JSON.stringify(routes, null, 2), {
-      headers: {
-        "content-type": "application/json;charset=UTF-8",
-      },
+
+    if (pathname === "/routes.json") {
+      return new Response(JSON.stringify(routes, null, 2), {
+        headers: {
+          "content-type": "application/json;charset=UTF-8",
+          "access-control-allow-origin": "*",
+        },
+      });
+    }
+
+    const matchingRoutes = routes.flatMap((route) => {
+      const f = match("/" + route.from.replace(/\/$/, ""));
+      const result = f(pathname);
+      if (!result) {
+        return [];
+      }
+      const target = route.to.replace(
+        /:([a-z]+)/g,
+        (a, name) => (result.params as any)[name] || a
+      );
+      return [{ ...route, target }];
     });
+
+    if (matchingRoutes.length === 0) {
+      const redirectTo = "https://garten.page.link/" + pathname.slice(1);
+      return redirect(redirectTo);
+    }
+
+    if (matchingRoutes.length > 1) {
+      const output = html`<!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <title>Multiple matches for ${pathname}</title>
+          </head>
+          <body>
+            <h1>Multiple matches for ${pathname}</h1>
+            <table>
+              <thead>
+                <tr>
+                  <th>URL</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${matchingRoutes.map(
+                  (route) => html`<tr>
+                    <td><a href="${route.target}">${route.target}</a></td>
+                    <td>
+                      <a href="${route.definition}"
+                        >${new URL(route.definition).pathname}</a
+                      >
+                    </td>
+                  </tr>`
+                )}
+              </tbody>
+            </table>
+          </body>
+        </html>`;
+      return new Response(renderHtml(output), {
+        headers: {
+          "content-type": "text/html;charset=UTF-8",
+        },
+      });
+    }
+    return redirect(matchingRoutes[0].target);
   },
 };
 
@@ -120,4 +189,24 @@ async function trackVisit(request: Request, env: Env, pathname: string) {
   if (!response.ok) {
     console.warn("Failed to track visit", response.status);
   }
+}
+
+function redirect(target: string) {
+  const output = html`<!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="refresh" content="0; url=${target}" />
+        <title>Redirecting to ${target}</title>
+      </head>
+      <body>
+        Redirecting to <a href="${target}">${target}</a>.
+      </body>
+    </html>`;
+  return new Response(renderHtml(output), {
+    status: 302,
+    headers: {
+      Location: target,
+    },
+  });
 }
