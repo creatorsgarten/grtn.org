@@ -35,15 +35,16 @@ export default {
       return new Response(null, { status: 404 });
     }
 
-    const amplitudePromise = trackVisit(request, env, pathname);
+    const track = () => trackVisit(request, env, pathname);
     const routes = await getRoutes();
-    await amplitudePromise;
 
     if (pathname === "/") {
+      await track();
       return redirect("https://creatorsgarten.org/wiki/GRTN");
     }
 
     if (pathname === "/routes.json") {
+      await track();
       return new Response(JSON.stringify(routes, null, 2), {
         headers: {
           "content-type": "application/json;charset=UTF-8",
@@ -69,6 +70,8 @@ export default {
       const redirectTo = "https://garten.page.link/" + pathname.slice(1);
       return redirect(redirectTo);
     }
+
+    await track();
 
     if (matchingRoutes.length > 1) {
       const output = html`<!DOCTYPE html>
@@ -152,9 +155,7 @@ async function searchWiki(query: any) {
       new URLSearchParams({
         input: JSON.stringify({ match: query }),
       }),
-    {
-      cf: { cacheTtl: 15 },
-    }
+    { cf: { cacheTtl: 15 } }
   );
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -174,6 +175,12 @@ async function trackVisit(request: Request, env: Env, pathname: string) {
   if (!amplitudeApiKey) {
     return;
   }
+  // Allow 1000ms for the request to complete
+  const abortController = new AbortController();
+  const timeout = setTimeout(() => {
+    abortController.abort();
+    console.warn("Timed out tracking visit");
+  }, 1000);
   const response = await fetch("https://api2.amplitude.com/2/httpapi", {
     method: "POST",
     body: JSON.stringify({
@@ -189,10 +196,12 @@ async function trackVisit(request: Request, env: Env, pathname: string) {
         },
       ],
     }),
+    signal: abortController.signal,
   });
   if (!response.ok) {
     console.warn("Failed to track visit", response.status);
   }
+  clearTimeout(timeout);
 }
 
 function redirect(target: string) {
