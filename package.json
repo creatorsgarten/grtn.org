@@ -1,0 +1,13 @@
+{
+  "name": "grtn",
+  "version": "0.0.0",
+  "devDependencies": {
+    "wrangler": "2.16.0"
+  },
+  "private": true,
+  "scripts": {
+    "start": "wrangler dev",
+    "deploy": "wrangler publish",
+    "test": "vitest"
+  }
+}
