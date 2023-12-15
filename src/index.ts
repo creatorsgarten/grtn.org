@@ -40,7 +40,33 @@ export default {
       return await handleRequest(request, env);
     } catch (e) {
       sentry.captureException(e);
-      throw e;
+      if (new URL(request.url).hostname === "localhost") {
+        // On development mode, this displays a nice error page (only in development mode).
+        throw e;
+      } else {
+        // On production mode, when an error is thrown, the "Worker threw exception" page is displayed.
+        // So we replace the error page with a nice page.
+        const output = html`<!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8" />
+              <title>500 - Please try again</title>
+            </head>
+            <body>
+              <h1>Something went wrong. Please refresh the page.</h1>
+              <details>
+                <summary>Technical details</summary>
+                <pre>${e}</pre>
+              </details>
+            </body>
+          </html>`;
+        return new Response(renderHtml(output), {
+          headers: {
+            "content-type": "text/html;charset=UTF-8",
+          },
+          status: 500,
+        });
+      }
     }
   },
 };
@@ -50,6 +76,10 @@ async function handleRequest(request: Request, env: Env) {
 
   if (pathname === "/favicon.ico") {
     return new Response(null, { status: 404 });
+  }
+
+  if (pathname === "/_dev/crash") {
+    throw new Error("this is a test error!");
   }
 
   const track = () => trackVisit(request, env, pathname);
@@ -191,33 +221,37 @@ async function trackVisit(request: Request, env: Env, pathname: string) {
   if (!amplitudeApiKey) {
     return;
   }
-  // Allow 1000ms for the request to complete
-  const abortController = new AbortController();
-  const timeout = setTimeout(() => {
-    abortController.abort();
-    console.warn("Timed out tracking visit");
-  }, 1000);
-  const response = await fetch("https://api2.amplitude.com/2/httpapi", {
-    method: "POST",
-    body: JSON.stringify({
-      api_key: amplitudeApiKey,
-      events: [
-        {
-          user_id: "anonymous_user",
-          event_type: "visit",
-          event_properties: {
-            pathname,
+  try {
+    // Allow 1000ms for the request to complete
+    const abortController = new AbortController();
+    const timeout = setTimeout(() => {
+      abortController.abort();
+      console.warn("Timed out tracking visit");
+    }, 1000);
+    const response = await fetch("https://api2.amplitude.com/2/httpapi", {
+      method: "POST",
+      body: JSON.stringify({
+        api_key: amplitudeApiKey,
+        events: [
+          {
+            user_id: "anonymous_user",
+            event_type: "visit",
+            event_properties: {
+              pathname,
+            },
+            ip: request.headers.get("cf-connecting-ip"),
           },
-          ip: request.headers.get("cf-connecting-ip"),
-        },
-      ],
-    }),
-    signal: abortController.signal,
-  });
-  if (!response.ok) {
-    console.warn("Failed to track visit", response.status);
+        ],
+      }),
+      signal: abortController.signal,
+    });
+    if (!response.ok) {
+      console.warn("Failed to track visit", response.status);
+    }
+    clearTimeout(timeout);
+  } catch (error) {
+    console.warn("Failed to track visit", error);
   }
-  clearTimeout(timeout);
 }
 
 function redirect(target: string) {
