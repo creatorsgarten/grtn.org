@@ -1,5 +1,6 @@
 import { match } from "path-to-regexp";
 import { html, renderHtml } from "tagged-hypertext";
+import { Toucan } from "toucan-js";
 
 export interface Env {
   // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
@@ -15,6 +16,7 @@ export interface Env {
   // MY_SERVICE: Fetcher;
 
   AMPLITUDE_API_KEY: string;
+  SENTRY_DSN: string;
 }
 
 interface RedirectRoute {
@@ -29,90 +31,104 @@ export default {
     env: Env,
     ctx: ExecutionContext
   ): Promise<Response> {
-    const pathname = new URL(request.url).pathname;
-
-    if (pathname === "/favicon.ico") {
-      return new Response(null, { status: 404 });
-    }
-
-    const track = () => trackVisit(request, env, pathname);
-    const routes = await getRoutes();
-
-    if (pathname === "/") {
-      await track();
-      return redirect("https://creatorsgarten.org/wiki/GRTN");
-    }
-
-    if (pathname === "/routes.json") {
-      await track();
-      return new Response(JSON.stringify(routes, null, 2), {
-        headers: {
-          "content-type": "application/json;charset=UTF-8",
-          "access-control-allow-origin": "*",
-        },
-      });
-    }
-
-    const matchingRoutes = routes.flatMap((route) => {
-      const f = match("/" + route.from.replace(/\/$/, ""));
-      const result = f(pathname);
-      if (!result) {
-        return [];
-      }
-      const target = route.to.replace(
-        /:([a-z]+)/g,
-        (a, name) => (result.params as any)[name] || a
-      );
-      return [{ ...route, target }];
+    const sentry = new Toucan({
+      dsn: env.SENTRY_DSN,
+      context: ctx,
+      request: request,
     });
-
-    if (matchingRoutes.length === 0) {
-      const redirectTo = "https://garten.page.link/" + pathname.slice(1);
-      return redirect(redirectTo);
+    try {
+      return await handleRequest(request, env);
+    } catch (e) {
+      sentry.captureException(e);
+      throw e;
     }
-
-    await track();
-
-    if (matchingRoutes.length > 1) {
-      const output = html`<!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8" />
-            <title>Multiple matches for ${pathname}</title>
-          </head>
-          <body>
-            <h1>Multiple matches for ${pathname}</h1>
-            <table>
-              <thead>
-                <tr>
-                  <th>URL</th>
-                  <th>Source</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${matchingRoutes.map(
-                  (route) => html`<tr>
-                    <td><a href="${route.target}">${route.target}</a></td>
-                    <td>
-                      <a href="${route.definition}"
-                        >${new URL(route.definition).pathname}</a
-                      >
-                    </td>
-                  </tr>`
-                )}
-              </tbody>
-            </table>
-          </body>
-        </html>`;
-      return new Response(renderHtml(output), {
-        headers: {
-          "content-type": "text/html;charset=UTF-8",
-        },
-      });
-    }
-    return redirect(matchingRoutes[0].target);
   },
 };
+
+async function handleRequest(request: Request, env: Env) {
+  const pathname = new URL(request.url).pathname;
+
+  if (pathname === "/favicon.ico") {
+    return new Response(null, { status: 404 });
+  }
+
+  const track = () => trackVisit(request, env, pathname);
+  const routes = await getRoutes();
+
+  if (pathname === "/") {
+    await track();
+    return redirect("https://creatorsgarten.org/wiki/GRTN");
+  }
+
+  if (pathname === "/routes.json") {
+    await track();
+    return new Response(JSON.stringify(routes, null, 2), {
+      headers: {
+        "content-type": "application/json;charset=UTF-8",
+        "access-control-allow-origin": "*",
+      },
+    });
+  }
+
+  const matchingRoutes = routes.flatMap((route) => {
+    const f = match("/" + route.from.replace(/\/$/, ""));
+    const result = f(pathname);
+    if (!result) {
+      return [];
+    }
+    const target = route.to.replace(
+      /:([a-z]+)/g,
+      (a, name) => (result.params as any)[name] || a
+    );
+    return [{ ...route, target }];
+  });
+
+  if (matchingRoutes.length === 0) {
+    const redirectTo = "https://garten.page.link/" + pathname.slice(1);
+    return redirect(redirectTo);
+  }
+
+  await track();
+
+  if (matchingRoutes.length > 1) {
+    const output = html`<!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Multiple matches for ${pathname}</title>
+        </head>
+        <body>
+          <h1>Multiple matches for ${pathname}</h1>
+          <table>
+            <thead>
+              <tr>
+                <th>URL</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${matchingRoutes.map(
+                (route) => html`<tr>
+                  <td><a href="${route.target}">${route.target}</a></td>
+                  <td>
+                    <a href="${route.definition}"
+                      >${new URL(route.definition).pathname}</a
+                    >
+                  </td>
+                </tr>`
+              )}
+            </tbody>
+          </table>
+        </body>
+      </html>`;
+    return new Response(renderHtml(output), {
+      headers: {
+        "content-type": "text/html;charset=UTF-8",
+      },
+    });
+  }
+  return redirect(matchingRoutes[0].target);
+}
 
 async function getRoutes() {
   const [shortcuts, redirects] = await Promise.all([
